@@ -34,7 +34,7 @@ import {
 import { UpdateCompletePopup } from "@/components/UpdateCompletePopup";
 
 export default function DailyReportApp() {
-  const [activeTab, setActiveTab] = useRecoilState(activeTabAtom);
+  // const [activeTab, setActiveTab] = useRecoilState(activeTabAtom);
   const [activeTab, setActiveTab] = useState<"create" | "list" | "analysis">(
     "create"
   );
