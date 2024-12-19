@@ -1,101 +1,350 @@
-import Image from "next/image";
+/* eslint-disable @typescript-eslint/no-unused-vars */
+"use client";
 
-export default function Home() {
+import React from "react";
+import { useState, useEffect, SetStateAction } from "react";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  PlusIcon,
+  ListIcon,
+  BarChartIcon,
+  RefreshCw,
+  Loader,
+} from "lucide-react";
+import { Notification } from "@/components/Notification";
+import { PdfExportModal } from "@/components/PdfExportModal";
+import { ReportList } from "@/components/ReportList";
+import { CustomTemplateSelector } from "@/components/CustomTemplateSelector";
+import { KeywordExtractor } from "@/components/KeywordExtractor";
+import { ReportAnalysis } from "@/components/ReportAnalysis";
+import { CommentSection } from "@/components/CommentSection";
+import { RealtimeSync } from "@/components/RealtimeSync";
+import db from "../lib/firebase/firebase";
+import {
+  where,
+  query,
+  addDoc,
+  collection,
+  getDocs,
+  updateDoc,
+  doc,
+  getDoc,
+} from "firebase/firestore";
+import { UpdateCompletePopup } from "@/components/UpdateCompletePopup";
+
+export default function DailyReportApp() {
+  // const [activeTab, setActiveTab] = useRecoilState(activeTabAtom);
+  const [activeTab, setActiveTab] = useState<"create" | "list" | "analysis">(
+    "create"
+  );
+  const [fetchedDailyReport, setFetchedDailyReport] = useState<DailyReport>({
+    reportId: "",
+    content: "",
+    createdAt: "",
+    status: "",
+    templateId: "",
+    updatedAt: "",
+    userId: "",
+  });
+  const [isExistDailyReport, setIsExistDailyReport] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [dailyReport, setDailyReport] = useState("");
+  const [isUpdate, setIsUpdate] = useState(false);
+  const [isRegistration, setIsRegistration] = useState(false);
+  const [error, setError] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [isRegistering, setIsRegistering] = useState(false);
+
+  const handleDailyReportChange = (e: {
+    target: { value: SetStateAction<string> };
+  }) => {
+    setDailyReport(e.target.value);
+  };
+
+  //すでに登録されてる日報を取得
+  const fetchDailyReport = async (id: string) => {
+    try {
+      setFetchedDailyReport({
+        reportId: "",
+        content: "",
+        createdAt: "",
+        status: "",
+        templateId: "",
+        updatedAt: "",
+        userId: "",
+      });
+      setDailyReport("");
+      setLoading(true);
+      const startOfDay = new Date();
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date();
+      endOfDay.setHours(23, 59, 59, 999);
+
+      if (id) {
+        const docRef = doc(db, "reports", id);
+        const docSnap = await getDoc(docRef);
+
+        if (!docSnap.exists()) {
+          setIsExistDailyReport(false);
+        } else {
+          const docData = docSnap.data();
+          setFetchedDailyReport((prevState) => ({
+            ...prevState,
+            reportId: id,
+            content: docData.content,
+            createdAt: docData.createdAt,
+            status: docData.status,
+            templateId: docData.templateId,
+            updatedAt: docData.updatedAt,
+            userId: docData.userId,
+          }));
+          setDailyReport(docData.content);
+          setIsExistDailyReport(true);
+        }
+      } else {
+        const q = query(
+          collection(db, "reports"),
+          where("createdAt", ">=", startOfDay),
+          where("createdAt", "<=", endOfDay)
+        );
+
+        const querySnapshot = await getDocs(q);
+        if (querySnapshot.empty) {
+          setIsExistDailyReport(false);
+        } else {
+          querySnapshot.forEach((doc) => {
+            setFetchedDailyReport((prevState) => ({
+              ...prevState,
+              reportId: doc.id,
+              content: doc.data().content,
+              createdAt: doc.data().createdAt,
+              status: doc.data().status,
+              templateId: doc.data().templateId,
+              updatedAt: doc.data().updatedAt,
+              userId: doc.data().userId,
+            }));
+            setDailyReport(doc.data().content);
+          });
+          setIsExistDailyReport(true);
+        }
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false); // データ取得完了時にロード状態を解除
+    }
+  };
+
+  //新しい日報を追加
+  const dailyWorkReportRegistration = async () => {
+    try {
+      setIsRegistering(true);
+      const docRef = await addDoc(collection(db, "reports"), {
+        content: dailyReport,
+        createdAt: new Date(),
+        status: "完了",
+        templateId: "6dMQb1luWEFZDI87vBDt",
+        updatedAt: new Date(),
+        userId: "hXRfwLUiITu3rKFtc8OV",
+      });
+      setIsRegistration(true);
+      setIsRegistering(false);
+      fetchDailyReport("");
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  //日報データを更新
+  const updateDailyWorkReportRegistration = async () => {
+    try {
+      setIsUpdating(true);
+      const docRef = doc(db, "reports", fetchedDailyReport.reportId);
+      await updateDoc(docRef, {
+        content: dailyReport,
+        updatedAt: new Date(),
+      });
+      setIsUpdate(true);
+      setIsUpdating(false);
+    } catch (err) {
+      setError(true);
+    }
+  };
+
+  // const templateTouroku = async () => {
+  //   const docRef = doc(db, "templates", "jwyRuhOLT2lQc3Ak4frd");
+  //   await updateDoc(docRef, {
+  //     content: dailyReport,
+  //   });
+  // }
+
+
+  useEffect(() => {
+    fetchDailyReport("");
+  }, []);
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+    <div className="min-h-screen bg-gradient-to-br from-vivid-blue via-white to-vivid-purple text-gray-900">
+      <header className="flex items-center justify-between border-b border-vivid-blue bg-white bg-opacity-80 p-6 shadow-sm">
+        <h1 className="text-3xl font-bold text-vivid-purple">日報管理</h1>
+        <div className="flex items-center space-x-4">
+          <PdfExportModal />
+          <Notification
+            onSelectedNotification={fetchDailyReport}
+            onChangeTab={setActiveTab}
+          />
         </div>
+      </header>
+      <main className="container mx-auto p-6 space-y-8">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <Button
+              className="bg-orange-400 hover:bg-orange-300"
+              onClick={() => fetchDailyReport("")}
+            >
+              今日の日報
+            </Button>
+            <Button
+              variant={activeTab === "create" ? "default" : "outline"}
+              onClick={() => setActiveTab("create")}
+              className={`flex items-center  ${
+                activeTab === "create"
+                  ? "bg-black text-white font-bold"
+                  : "text-black text-black"
+              }`}
+            >
+              <PlusIcon className="mr-2 h-5 w-5" />
+              日報作成
+            </Button>
+            <Button
+              variant={activeTab === "list" ? "default" : "outline"}
+              onClick={() => setActiveTab("list")}
+              className={`flex items-center ${
+                activeTab === "list"
+                  ? "bg-black text-white font-bold"
+                  : "text-black text-black"
+              }`}
+            >
+              <ListIcon className="mr-2 h-5 w-5" />
+              日報一覧
+            </Button>
+            <Button
+              variant={activeTab === "analysis" ? "default" : "outline"}
+              onClick={() => setActiveTab("analysis")}
+              className={`flex items-center ${
+                activeTab === "analysis"
+                  ? "bg-black text-white font-bold"
+                  : "text-black text-black"
+              }`}
+            >
+              <BarChartIcon className="mr-2 h-5 w-5" />
+              分析
+            </Button>
+          </div>
+        </div>
+
+        {activeTab === "create" && (
+          <div className="space-y-6">
+            <CustomTemplateSelector onSelectedTemplate={setDailyReport} />
+            <div>
+              {loading ? (
+                <div className="flex justify-center" aria-label="読み込み中">
+                  <div className="animate-spin h-10 w-10 border-4 border-black rounded-full border-t-transparent"></div>
+                </div>
+              ) : (
+                <Textarea
+                  placeholder={
+                    loading
+                      ? "日報データを取得中"
+                      : "今日の作業内容を入力してください..."
+                  }
+                  className="min-h-[200px] border-vivid-blue focus:border-vivid-purple focus:ring-vivid-purple"
+                  onChange={handleDailyReportChange}
+                  value={dailyReport}
+                />
+              )}
+            </div>
+            <KeywordExtractor />
+            <div className="flex justify-end space-x-4">
+              <Button variant="outline" className="text-black">
+                下書き保存
+              </Button>
+              {!loading && isExistDailyReport ? (
+                <Button
+                  className="bg-purple-500 text-white hover:bg-purple-600 font-bold"
+                  onClick={updateDailyWorkReportRegistration}
+                >
+                  {isUpdating ? (
+                    <>
+                      <Loader className="animate-spin mr-2 h-5 w-5" />
+                      更新中・・・
+                    </>
+                  ) : (
+                    <>
+                      <RefreshCw className="mr-2 h-5 w-5" />
+                      日報を更新する
+                    </>
+                  )}
+                </Button>
+              ) : (
+                <Button
+                  className="bg-blue-500 text-white hover:bg-blue-400 font-bold"
+                  disabled={loading}
+                  onClick={dailyWorkReportRegistration}
+                >
+                  {isRegistering ? (
+                    <>
+                      <Loader className="animate-spin mr-2 h-5 w-5" />
+                      登録中・・・
+                    </>
+                  ) : (
+                    <>
+                      <PlusIcon className="mr-2 h-5 w-5" />
+                      日報を追加する
+                    </>
+                  )}
+                </Button>
+              )}
+            </div>
+          </div>
+        )}
+
+        {activeTab === "list" && (
+          <ReportList
+            onSelectedReport={fetchDailyReport}
+            onChangeTab={setActiveTab}
+          />
+        )}
+
+        {activeTab === "analysis" && <ReportAnalysis />}
+
+        {activeTab === "create" && (
+          <CommentSection
+            reportId={fetchedDailyReport.reportId}
+            isLoaded={loading}
+          />
+        )}
       </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+
+      <UpdateCompletePopup
+        isOpen={isUpdate}
+        onClose={() => setIsUpdate(false)}
+        action="更新"
+        target="日報"
+      />
+
+      <UpdateCompletePopup
+        isOpen={isRegistration}
+        onClose={() => setIsRegistration(false)}
+        action="追加"
+        target="日報"
+      />
+      <RealtimeSync />
+
+      {/* <Button onClick={templateTouroku}>テンプレート登録</Button> */}
+
+      {/* <CustomTemplate /> */}
     </div>
   );
 }
