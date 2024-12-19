@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Loader2 } from 'lucide-react'
 
 export function RealtimeSync() {
@@ -13,6 +13,11 @@ export function RealtimeSync() {
 
   //   return () => clearInterval(syncInterval)
   // }, [])
+
+  useEffect(() => {
+    setIsSyncing(false);
+  }, [])
+  
 
   return (
     <div className="fixed bottom-4 right-4 bg-white p-2 rounded-full shadow">

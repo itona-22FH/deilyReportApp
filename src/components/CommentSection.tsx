@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader, MessageSquareIcon, PlusIcon, RefreshCw } from "lucide-react";
+import { Loader, MessageSquareIcon, PlusIcon } from "lucide-react";
 import db from "@/lib/firebase/firebase";
 import {
   query,

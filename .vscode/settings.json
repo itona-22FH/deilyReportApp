@@ -1,6 +1,16 @@
 {
     "cSpell.words": [
+        "APIKEY",
+        "AUTHDOMAIN",
+        "dailyreportapp",
+        "firebaseapp",
+        "firebasestorage",
         "firestore",
-        "MESSAGEINGSENDERID"
+        "MEASUREMENTID",
+        "MESSAGEINGSENDERID",
+        "STORAGEBUCKET",
+        "Touroku",
+        "vercel",
+        "WEFZDI"
     ]
 }

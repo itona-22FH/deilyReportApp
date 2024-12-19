@@ -14,7 +14,6 @@ type DailyReport = {
 
 type ReportListProps = {
   onSelectedReport: (id: string) => Promise<void>;
-  onChangeTab: any;
 };
 
 type CommentSectionProps = {
@@ -45,5 +44,4 @@ type CustomTemplateSelectorProps = {
 
 type NotificationProps = {
   onSelectedNotification: (id: string) => Promise<void>;
-  onChangeTab: any;
 }

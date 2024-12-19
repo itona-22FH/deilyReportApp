@@ -23,16 +23,18 @@ import {
   updateDoc,
 } from "firebase/firestore";
 import db from "../lib/firebase/firebase";
+import { useAtom } from 'jotai';
+import { activeTabAtom } from "../lib/atoms/atoms";
 
 export function Notification({
-  onSelectedNotification,
-  onChangeTab,
+  onSelectedNotification
 }: NotificationProps) {
   const [isExistNotification, setIsExistNotification] = useState(false);
   const [fetchedNotifications, setFetchedNotifications] = useState([]);
   const [comments, setComments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [activeTab, setActiveTab] = useAtom(activeTabAtom);
 
   //すべての通知を取得
   const fetchAllNotifications = async () => {
@@ -108,7 +110,7 @@ export function Notification({
   //未読の通知を選択する
   const handleNotificationClick = async (reportId: string) => {
     try {
-      onChangeTab("create");
+      setActiveTab("create");
       onSelectedNotification(reportId);
       setIsUpdating(true);
       const q = query(

@@ -32,12 +32,11 @@ import {
   getDoc,
 } from "firebase/firestore";
 import { UpdateCompletePopup } from "@/components/UpdateCompletePopup";
+import { useAtom } from 'jotai';
+import { activeTabAtom } from "../lib/atoms/atoms";
 
 export default function DailyReportApp() {
-  // const [activeTab, setActiveTab] = useRecoilState(activeTabAtom);
-  const [activeTab, setActiveTab] = useState<"create" | "list" | "analysis">(
-    "create"
-  );
+  const [activeTab, setActiveTab] = useAtom(activeTabAtom);
   const [fetchedDailyReport, setFetchedDailyReport] = useState<DailyReport>({
     reportId: "",
     content: "",
@@ -192,7 +191,6 @@ export default function DailyReportApp() {
           <PdfExportModal />
           <Notification
             onSelectedNotification={fetchDailyReport}
-            onChangeTab={setActiveTab}
           />
         </div>
       </header>
@@ -313,7 +311,6 @@ export default function DailyReportApp() {
         {activeTab === "list" && (
           <ReportList
             onSelectedReport={fetchDailyReport}
-            onChangeTab={setActiveTab}
           />
         )}
 

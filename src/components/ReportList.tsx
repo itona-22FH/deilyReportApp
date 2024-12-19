@@ -15,14 +15,17 @@ import {
 import { ChevronLeft, ChevronRight, Search } from "lucide-react";
 import db from "../lib/firebase/firebase";
 import { where, query, collection, getDocs, orderBy } from "firebase/firestore";
+import { useAtom } from 'jotai';
+import { activeTabAtom } from "../lib/atoms/atoms";
 
-export function ReportList({onSelectedReport, onChangeTab}: ReportListProps) {
+export function ReportList({onSelectedReport}: ReportListProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [sortBy, setSortBy] = useState("date");
   const [fetchedDailyReport, setFetchedDailyReport] = useState([]);
   const [loading, setLoading] = useState(true);
   const reportsPerPage = 10;
+  const [activeTab, setActiveTab] = useAtom(activeTabAtom);
 
   //すべての日報を取得
   const fetchAllDailyReportByUserId = async () => {
@@ -114,7 +117,7 @@ export function ReportList({onSelectedReport, onChangeTab}: ReportListProps) {
                 }`}
                 onClick={() => {
                   onSelectedReport(report.reportId);
-                  onChangeTab("create");
+                  setActiveTab("create");
                 }
                 }
               >
