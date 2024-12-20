@@ -32,7 +32,7 @@ import {
   getDoc,
 } from "firebase/firestore";
 import { UpdateCompletePopup } from "@/components/UpdateCompletePopup";
-import { useAtom } from 'jotai';
+import { useAtom } from "jotai";
 import { activeTabAtom } from "../lib/atoms/atoms";
 
 export default function DailyReportApp() {
@@ -54,6 +54,7 @@ export default function DailyReportApp() {
   const [error, setError] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
 
   const handleDailyReportChange = (e: {
     target: { value: SetStateAction<string> };
@@ -166,6 +167,7 @@ export default function DailyReportApp() {
       });
       setIsUpdate(true);
       setIsUpdating(false);
+      setIsEditMode(false);
     } catch (err) {
       setError(true);
     }
@@ -178,6 +180,9 @@ export default function DailyReportApp() {
   //   });
   // }
 
+  const handleEditModeChange = () => {
+    setIsEditMode(true);
+  };
 
   useEffect(() => {
     fetchDailyReport("");
@@ -189,9 +194,7 @@ export default function DailyReportApp() {
         <h1 className="text-3xl font-bold text-vivid-purple">日報管理</h1>
         <div className="flex items-center space-x-4">
           <PdfExportModal />
-          <Notification
-            onSelectedNotification={fetchDailyReport}
-          />
+          <Notification onSelectedNotification={fetchDailyReport} />
         </div>
       </header>
       <main className="container mx-auto p-6 space-y-8">
@@ -199,7 +202,10 @@ export default function DailyReportApp() {
           <div className="flex items-center space-x-4">
             <Button
               className="bg-orange-400 hover:bg-orange-300"
-              onClick={() => fetchDailyReport("")}
+              onClick={() => {
+                setActiveTab("create");
+                fetchDailyReport("");
+              }}
             >
               今日の日報
             </Button>
@@ -244,23 +250,29 @@ export default function DailyReportApp() {
 
         {activeTab === "create" && (
           <div className="space-y-6">
-            <CustomTemplateSelector onSelectedTemplate={setDailyReport} />
             <div>
               {loading ? (
                 <div className="flex justify-center" aria-label="読み込み中">
                   <div className="animate-spin h-10 w-10 border-4 border-black rounded-full border-t-transparent"></div>
                 </div>
+              ) : !loading && isExistDailyReport && !isEditMode ? (
+                <pre className="text-md bg-gray-100 p-3 rounded">
+                  {dailyReport}
+                </pre>
               ) : (
+                <>
+                <CustomTemplateSelector onSelectedTemplate={setDailyReport} />
                 <Textarea
                   placeholder={
                     loading
-                      ? "日報データを取得中"
-                      : "今日の作業内容を入力してください..."
+                    ? "日報データを取得中"
+                    : "今日の作業内容を入力してください..."
                   }
                   className="min-h-[200px] border-vivid-blue focus:border-vivid-purple focus:ring-vivid-purple"
                   onChange={handleDailyReportChange}
                   value={dailyReport}
-                />
+                  />
+                </>
               )}
             </div>
             <KeywordExtractor />
@@ -268,40 +280,47 @@ export default function DailyReportApp() {
               <Button variant="outline" className="text-black">
                 下書き保存
               </Button>
-              {!loading && isExistDailyReport ? (
+              {!isEditMode ? (
+                !loading && isExistDailyReport ? (
+                  <Button
+                    className="bg-purple-500 text-white hover:bg-purple-600 font-bold"
+                    onClick={handleEditModeChange}
+                  >
+                    日報を編集する
+                  </Button>
+                ) : isRegistering ? (
+                  <Button
+                    className="bg-blue-500 text-white hover:bg-blue-400 font-bold"
+                    disabled={isRegistering}
+                  >
+                    <Loader className="animate-spin mr-2 h-5 w-5" />
+                    登録中・・・
+                  </Button>
+                ) : (
+                  <Button
+                    className="bg-blue-500 text-white hover:bg-blue-400 font-bold"
+                    disabled={loading}
+                    onClick={dailyWorkReportRegistration}
+                  >
+                    <PlusIcon className="mr-2 h-5 w-5" />
+                    日報を追加する
+                  </Button>
+                )
+              ) : isUpdating ? (
                 <Button
-                  className="bg-purple-500 text-white hover:bg-purple-600 font-bold"
-                  onClick={updateDailyWorkReportRegistration}
+                  className="bg-green-500 text-white hover:bg-green-600 font-bold"
+                  disabled={isUpdating}
                 >
-                  {isUpdating ? (
-                    <>
-                      <Loader className="animate-spin mr-2 h-5 w-5" />
-                      更新中・・・
-                    </>
-                  ) : (
-                    <>
-                      <RefreshCw className="mr-2 h-5 w-5" />
-                      日報を更新する
-                    </>
-                  )}
+                  <Loader className="animate-spin mr-2 h-5 w-5" />
+                  更新中・・・
                 </Button>
               ) : (
                 <Button
-                  className="bg-blue-500 text-white hover:bg-blue-400 font-bold"
-                  disabled={loading}
-                  onClick={dailyWorkReportRegistration}
+                  className="bg-green-500 text-white hover:bg-green-600 font-bold"
+                  onClick={updateDailyWorkReportRegistration}
                 >
-                  {isRegistering ? (
-                    <>
-                      <Loader className="animate-spin mr-2 h-5 w-5" />
-                      登録中・・・
-                    </>
-                  ) : (
-                    <>
-                      <PlusIcon className="mr-2 h-5 w-5" />
-                      日報を追加する
-                    </>
-                  )}
+                  <RefreshCw className="mr-2 h-5 w-5" />
+                  日報を更新する
                 </Button>
               )}
             </div>
@@ -309,9 +328,7 @@ export default function DailyReportApp() {
         )}
 
         {activeTab === "list" && (
-          <ReportList
-            onSelectedReport={fetchDailyReport}
-          />
+          <ReportList onSelectedReport={fetchDailyReport} />
         )}
 
         {activeTab === "analysis" && <ReportAnalysis />}

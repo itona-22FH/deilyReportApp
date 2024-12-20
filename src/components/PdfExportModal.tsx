@@ -15,41 +15,33 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { Document, Page, Text, View, StyleSheet, PDFDownloadLink, Font } from '@react-pdf/renderer'
+import nasuRegular from './public/Nasu-Regular.ttf'
+import nasuBold from './public/fonts/Nasu-Bold'
 
 Font.register({
-  family: "NotoSansJP",
-  fonts: [
-    {
-      src: "../app/fonts/NotoSansJP-Regular.ttf",
-    },
-    {
-      src: "../app/fonts/NotoSansJP-Bold.ttf",
-      fontWeight: "bold",
-    },
-  ],
+  family: "Nasu-Regular",
+  src: "./fonts/Nasu-Regular.ttf",
+});
+
+// フォント「ナス 太字」
+Font.register({
+  family: "Nasu-Bold",
+  src: "./fonts/Nasu-Bold.ttf",
 });
 
 const styles = StyleSheet.create({
-  page: {
-    flexDirection: 'column',
-    backgroundColor: '#E4E4E4',
-    padding: 30,
-    fontFamily: "NotoSansJP",
-  },
-  section: {
-    margin: 10,
-    padding: 10,
-    flexGrow: 1,
-  },
-  title: {
-    fontSize: 24,
-    marginBottom: 10,
-  },
-  text: {
+  tableCellHeader: {
+    margin: 5,
     fontSize: 12,
-    marginBottom: 5,
+    fontWeight: 500,
+    fontFamily: "Nasu-Bold",
   },
-})
+  tableCell: {
+    margin: 5,
+    fontSize: 10,
+    fontFamily: "Nasu-Regular",
+  },
+});
 
 const MyDocument = ({ startDate, endDate }) => (
   <Document>

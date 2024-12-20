@@ -1,8 +1,14 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import { useEffect, useState } from "react";
+import { SetStateAction, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader, MessageSquareIcon, PlusIcon } from "lucide-react";
+import {
+  Edit,
+  Loader,
+  MessageSquareIcon,
+  PlusIcon,
+  RefreshCw,
+} from "lucide-react";
 import db from "@/lib/firebase/firebase";
 import {
   query,
@@ -11,6 +17,8 @@ import {
   getDocs,
   orderBy,
   addDoc,
+  updateDoc,
+  doc,
 } from "firebase/firestore";
 import { UpdateCompletePopup } from "./UpdateCompletePopup";
 
@@ -20,6 +28,10 @@ export function CommentSection({ reportId, isLoaded }: CommentSectionProps) {
   const [comments, setComments] = useState<UserComment[]>([]);
   const [isRegistration, setIsRegistration] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
+  const [isEditTarget, setIsEditTarget] = useState("");
+  const [updatedComment, setUpdatedComment] = useState("");
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [isUpdate, setIsUpdate] = useState(false);
 
   //すべてのコメントを取得
   const fetchAllComment = async () => {
@@ -92,13 +104,42 @@ export function CommentSection({ reportId, isLoaded }: CommentSectionProps) {
         isRead: false,
         reportId: reportId,
         type: "コメント",
-        userId: "hXRfwLUiITu3rKFtc8OV"
-      })
-
+        userId: "hXRfwLUiITu3rKFtc8OV",
+      });
     } catch (err) {
       console.error(err);
     } finally {
       setIsRegistering(false);
+    }
+  };
+
+  const handleCommentChange = (e: {
+    target: { value: SetStateAction<string> };
+  }) => {
+    setUpdatedComment(e.target.value);
+  };
+
+  const handleTargetComment = (id: string, content: string) => {
+    setIsEditTarget(id);
+    setUpdatedComment(content);
+  };
+
+  //コメントの更新
+  const handleUpdateComment = async () => {
+    setIsUpdating(true);
+    const docRef = doc(db, "comments", isEditTarget);
+    try {
+      await updateDoc(docRef, {
+        content: updatedComment,
+      });
+      setIsEditTarget("");
+      setUpdatedComment("");
+      setIsUpdate(true);
+      fetchAllComment();
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsUpdating(false);
     }
   };
 
@@ -119,14 +160,62 @@ export function CommentSection({ reportId, isLoaded }: CommentSectionProps) {
       ) : (
         <div className="space-y-4 mb-6">
           {comments.map((comment) => (
-            <div key={comment.commentId} className="bg-gray-100 p-4 rounded-lg pointer">
+            <div
+              key={comment.commentId}
+              className="bg-gray-100 p-4 rounded-lg pointer"
+            >
               <div className="flex justify-between items-center mb-2">
-                <span className="font-semibold">{comment.userName}</span>
-                <span className="text-sm text-gray-500">
+                <div className="flex items-center">
+                  <span className="text-gray-500">{comment.userName}</span>
+                  {isEditTarget === comment.commentId ? (
+                    <></>
+                  ) : (
+                    <Edit
+                      className="ml-1 w-5 h-5"
+                      onClick={() =>
+                        handleTargetComment(comment.commentId, comment.content)
+                      }
+                    />
+                  )}
+                </div>
+                <span className="text-sm text-gray-500 ">
                   {comment.createdAt}
                 </span>
               </div>
-              <Textarea disabled={true} className="border-none resize-none ">{comment.content}</Textarea>
+              {isEditTarget === comment.commentId ? (
+                <div className="flex items-center">
+                  <Textarea
+                    readOnly={isEditTarget === comment.commentId ? false : true}
+                    className={`text-xl ${
+                      isEditTarget === comment.commentId
+                        ? "border-black"
+                        : "border-none"
+                    }
+                  overflow-hidden`}
+                    onChange={handleCommentChange}
+                  >
+                    {comment.content}
+                  </Textarea>
+                  <Button
+                    className="ml-3 bg-purple-500 p-1 hover:bg-purple-600"
+                    onClick={handleUpdateComment}
+                  >
+                    {isUpdating ? (
+                      <>
+                        <Loader className="animate-spin h-5 w-5" />
+                        更新中・・・
+                      </>
+                    ) : (
+                      <>
+                        <RefreshCw className="h-5 w-5" />
+                        更新
+                      </>
+                    )}
+                  </Button>
+                </div>
+              ) : (
+                <pre className="text-md">{comment.content}</pre>
+              )}
             </div>
           ))}
         </div>
@@ -150,13 +239,19 @@ export function CommentSection({ reportId, isLoaded }: CommentSectionProps) {
             コメントを追加
           </>
         )}
-
       </Button>
 
       <UpdateCompletePopup
         isOpen={isRegistration}
         onClose={() => setIsRegistration(false)}
         action="追加"
+        target="コメント"
+      />
+
+      <UpdateCompletePopup
+        isOpen={isUpdate}
+        onClose={() => setIsUpdate(false)}
+        action="更新"
         target="コメント"
       />
     </div>
