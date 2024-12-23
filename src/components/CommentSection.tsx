@@ -8,6 +8,7 @@ import {
   MessageSquareIcon,
   PlusIcon,
   RefreshCw,
+  X,
 } from "lucide-react";
 import db from "@/lib/firebase/firebase";
 import {
@@ -20,7 +21,7 @@ import {
   updateDoc,
   doc,
 } from "firebase/firestore";
-import { UpdateCompletePopup } from "./UpdateCompletePopup";
+import { CompletePopup } from "./CompletePopup";
 
 export function CommentSection({ reportId, isLoaded }: CommentSectionProps) {
   const [newComment, setNewComment] = useState("");
@@ -29,7 +30,7 @@ export function CommentSection({ reportId, isLoaded }: CommentSectionProps) {
   const [isRegistration, setIsRegistration] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
   const [isEditTarget, setIsEditTarget] = useState("");
-  const [updatedComment, setUpdatedComment] = useState("");
+  const [updatedComment, setUpdatedComment] = useState<string | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
   const [isUpdate, setIsUpdate] = useState(false);
 
@@ -116,7 +117,7 @@ export function CommentSection({ reportId, isLoaded }: CommentSectionProps) {
   const handleCommentChange = (e: {
     target: { value: SetStateAction<string> };
   }) => {
-    setUpdatedComment(e.target.value);
+    setUpdatedComment(e.target.value.toString());
   };
 
   const handleTargetComment = (id: string, content: string) => {
@@ -131,6 +132,7 @@ export function CommentSection({ reportId, isLoaded }: CommentSectionProps) {
     try {
       await updateDoc(docRef, {
         content: updatedComment,
+        updatedAt: new Date()
       });
       setIsEditTarget("");
       setUpdatedComment("");
@@ -168,7 +170,7 @@ export function CommentSection({ reportId, isLoaded }: CommentSectionProps) {
                 <div className="flex items-center">
                   <span className="text-gray-500">{comment.userName}</span>
                   {isEditTarget === comment.commentId ? (
-                    <></>
+                    <X onClick={() => setIsEditTarget("")}></X>
                   ) : (
                     <Edit
                       className="ml-1 w-5 h-5"
@@ -186,6 +188,7 @@ export function CommentSection({ reportId, isLoaded }: CommentSectionProps) {
                 <div className="flex items-center">
                   <Textarea
                     readOnly={isEditTarget === comment.commentId ? false : true}
+                    value={updatedComment !== null ? updatedComment : comment.content}
                     className={`text-xl ${
                       isEditTarget === comment.commentId
                         ? "border-black"
@@ -203,12 +206,12 @@ export function CommentSection({ reportId, isLoaded }: CommentSectionProps) {
                     {isUpdating ? (
                       <>
                         <Loader className="animate-spin h-5 w-5" />
-                        更新中・・・
+                        保存中・・・
                       </>
                     ) : (
                       <>
                         <RefreshCw className="h-5 w-5" />
-                        更新
+                        保存
                       </>
                     )}
                   </Button>
@@ -236,22 +239,20 @@ export function CommentSection({ reportId, isLoaded }: CommentSectionProps) {
         ) : (
           <>
             <PlusIcon className="mr-2 h-5 w-5" />
-            コメントを追加
+            コメントを登録
           </>
         )}
       </Button>
-
-      <UpdateCompletePopup
-        isOpen={isRegistration}
-        onClose={() => setIsRegistration(false)}
-        action="追加"
-        target="コメント"
-      />
-
-      <UpdateCompletePopup
+      <CompletePopup
         isOpen={isUpdate}
         onClose={() => setIsUpdate(false)}
         action="更新"
+        target="コメント"
+      />
+      <CompletePopup
+        isOpen={isRegistration}
+        onClose={() => setIsRegistration(false)}
+        action="登録"
         target="コメント"
       />
     </div>
