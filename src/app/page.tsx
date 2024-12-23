@@ -11,6 +11,7 @@ import {
   BarChartIcon,
   RefreshCw,
   Loader,
+  Search,
 } from "lucide-react";
 import { Notification } from "@/components/Notification";
 import { PdfExportModal } from "@/components/PdfExportModal";
@@ -31,9 +32,11 @@ import {
   doc,
   getDoc,
 } from "firebase/firestore";
-import { UpdateCompletePopup } from "@/components/UpdateCompletePopup";
+import { CompletePopup } from "@/components/CompletePopup";
 import { useAtom } from "jotai";
 import { activeTabAtom } from "../lib/atoms/atoms";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 
 export default function DailyReportApp() {
   const [activeTab, setActiveTab] = useAtom(activeTabAtom);
@@ -55,6 +58,7 @@ export default function DailyReportApp() {
   const [isUpdating, setIsUpdating] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
 
   const handleDailyReportChange = (e: {
     target: { value: SetStateAction<string> };
@@ -100,6 +104,7 @@ export default function DailyReportApp() {
             userId: docData.userId,
           }));
           setDailyReport(docData.content);
+          setSelectedDate(docData.createdAt.toDate());
           setIsExistDailyReport(true);
         }
       } else {
@@ -136,6 +141,55 @@ export default function DailyReportApp() {
     }
   };
 
+  //日付を指定して日報を取得
+  const handleSearchReportByDate = async () => {
+    try {
+      setFetchedDailyReport({
+        reportId: "",
+        content: "",
+        createdAt: "",
+        status: "",
+        templateId: "",
+        updatedAt: "",
+        userId: "",
+      });
+      setLoading(true);
+      const startOfDay = new Date(selectedDate);
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date(selectedDate);
+      endOfDay.setHours(23, 59, 59, 999);
+      const q = query(
+        collection(db, "reports"),
+        where("createdAt", ">=", startOfDay),
+        where("createdAt", "<=", endOfDay)
+      );
+      const querySnapshot = await getDocs(q);
+      if (querySnapshot.empty) {
+        setIsExistDailyReport(false);
+        setDailyReport("");
+      } else {
+        querySnapshot.forEach((doc) => {
+          setFetchedDailyReport((prevState) => ({
+            ...prevState,
+            reportId: doc.id,
+            content: doc.data().content,
+            createdAt: doc.data().createdAt,
+            status: doc.data().status,
+            templateId: doc.data().templateId,
+            updatedAt: doc.data().updatedAt,
+            userId: doc.data().userId,
+          }));
+          setDailyReport(doc.data().content);
+        });
+        setIsExistDailyReport(true);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   //新しい日報を追加
   const dailyWorkReportRegistration = async () => {
     try {
@@ -153,6 +207,8 @@ export default function DailyReportApp() {
       fetchDailyReport("");
     } catch (err) {
       console.error(err);
+    } finally {
+      setIsRegistering(false);
     }
   };
 
@@ -169,7 +225,9 @@ export default function DailyReportApp() {
       setIsUpdating(false);
       setIsEditMode(false);
     } catch (err) {
-      setError(true);
+      console.error(err);
+    } finally {
+      setIsUpdating(false);
     }
   };
 
@@ -199,20 +257,46 @@ export default function DailyReportApp() {
       </header>
       <main className="container mx-auto p-6 space-y-8">
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center">
             <Button
-              className="bg-orange-400 hover:bg-orange-300"
+              className="bg-orange-400 hover:bg-orange-300 ml-3"
               onClick={() => {
                 setActiveTab("create");
+                setSelectedDate(new Date());
                 fetchDailyReport("");
               }}
             >
               今日の日報
             </Button>
+            {activeTab === "create" ? (
+              <>
+                <DatePicker
+                  selected={selectedDate}
+                  onChange={(date) => {
+                    setSelectedDate(date);
+                  }}
+                  className="px-4 py-2 ml-3 text-sm border rounded-lg bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  dateFormat="yyyy/MM/dd"
+                  placeholderText="日付を選択"
+                />
+                <Button
+                  size="icon"
+                  variant="outline"
+                  className="text-vivid-blue ml-3"
+                  onClick={handleSearchReportByDate}
+                >
+                  <Search className="h-4 w-4" />
+                </Button>
+              </>
+            ) : (
+              <></>
+            )}
+          </div>
+          <div className="flex items-center">
             <Button
               variant={activeTab === "create" ? "default" : "outline"}
               onClick={() => setActiveTab("create")}
-              className={`flex items-center  ${
+              className={`flex items-center ml-3 ${
                 activeTab === "create"
                   ? "bg-black text-white font-bold"
                   : "text-black text-black"
@@ -224,7 +308,7 @@ export default function DailyReportApp() {
             <Button
               variant={activeTab === "list" ? "default" : "outline"}
               onClick={() => setActiveTab("list")}
-              className={`flex items-center ${
+              className={`flex items-center ml-3 ${
                 activeTab === "list"
                   ? "bg-black text-white font-bold"
                   : "text-black text-black"
@@ -236,7 +320,7 @@ export default function DailyReportApp() {
             <Button
               variant={activeTab === "analysis" ? "default" : "outline"}
               onClick={() => setActiveTab("analysis")}
-              className={`flex items-center ${
+              className={`flex items-center ml-3 ${
                 activeTab === "analysis"
                   ? "bg-black text-white font-bold"
                   : "text-black text-black"
@@ -261,25 +345,35 @@ export default function DailyReportApp() {
                 </pre>
               ) : (
                 <>
-                <CustomTemplateSelector onSelectedTemplate={setDailyReport} />
-                <Textarea
-                  placeholder={
-                    loading
-                    ? "日報データを取得中"
-                    : "今日の作業内容を入力してください..."
-                  }
-                  className="min-h-[200px] border-vivid-blue focus:border-vivid-purple focus:ring-vivid-purple"
-                  onChange={handleDailyReportChange}
-                  value={dailyReport}
+                  <CustomTemplateSelector onSelectedTemplate={setDailyReport} />
+                  <Textarea
+                    placeholder={
+                      loading
+                        ? "日報データを取得中"
+                        : "今日の作業内容を入力してください..."
+                    }
+                    className="min-h-[200px] border-vivid-blue focus:border-vivid-purple focus:ring-vivid-purple"
+                    onChange={handleDailyReportChange}
+                    value={dailyReport}
                   />
                 </>
               )}
             </div>
             <KeywordExtractor />
             <div className="flex justify-end space-x-4">
-              <Button variant="outline" className="text-black">
+              {isEditMode ? (
+                <Button
+                  className="text-white bg-red-500 hover:bg-red-600"
+                  onClick={() => setIsEditMode(false)}
+                >
+                  キャンセル
+                </Button>
+              ) : (
+                <></>
+              )}
+              {/* <Button variant="outline" className="text-black">
                 下書き保存
-              </Button>
+              </Button> */}
               {!isEditMode ? (
                 !loading && isExistDailyReport ? (
                   <Button
@@ -303,7 +397,7 @@ export default function DailyReportApp() {
                     onClick={dailyWorkReportRegistration}
                   >
                     <PlusIcon className="mr-2 h-5 w-5" />
-                    日報を追加する
+                    日報を登録する
                   </Button>
                 )
               ) : isUpdating ? (
@@ -312,7 +406,7 @@ export default function DailyReportApp() {
                   disabled={isUpdating}
                 >
                   <Loader className="animate-spin mr-2 h-5 w-5" />
-                  更新中・・・
+                  保存中・・・
                 </Button>
               ) : (
                 <Button
@@ -320,7 +414,7 @@ export default function DailyReportApp() {
                   onClick={updateDailyWorkReportRegistration}
                 >
                   <RefreshCw className="mr-2 h-5 w-5" />
-                  日報を更新する
+                  日報を保存する
                 </Button>
               )}
             </div>
@@ -341,17 +435,17 @@ export default function DailyReportApp() {
         )}
       </main>
 
-      <UpdateCompletePopup
+      <CompletePopup
         isOpen={isUpdate}
         onClose={() => setIsUpdate(false)}
-        action="更新"
+        action="保存"
         target="日報"
       />
 
-      <UpdateCompletePopup
+      <CompletePopup
         isOpen={isRegistration}
         onClose={() => setIsRegistration(false)}
-        action="追加"
+        action="登録"
         target="日報"
       />
       <RealtimeSync />
