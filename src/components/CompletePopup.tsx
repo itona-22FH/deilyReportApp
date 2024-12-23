@@ -8,14 +8,14 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 
-interface UpdateCompletePopupProps {
+interface CompletePopupProps {
   isOpen: boolean;
   onClose: () => void;
   action: string;
   target: string;
 }
 
-export function UpdateCompletePopup({ isOpen, onClose, action, target }: UpdateCompletePopupProps) {
+export function CompletePopup({ isOpen, onClose, action, target }: CompletePopupProps) {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent>
