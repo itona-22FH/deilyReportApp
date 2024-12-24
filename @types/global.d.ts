@@ -5,6 +5,7 @@ type FetchDailyReportProps = {
 type DailyReport = {
   reportId: string;
   content: string;
+  reportDate: string;
   createdAt: string;
   status: string;
   templateId: string;
@@ -13,7 +14,7 @@ type DailyReport = {
 };
 
 type ReportListProps = {
-  onSelectedReport: (id: string) => Promise<void>;
+  fetchDailyReport: (id: string, date: Date | null) => Promise<void>;
 };
 
 type CommentSectionProps = {
@@ -32,16 +33,15 @@ type UserComment = {
 };
 
 type Template = {
-
   templateId: string
   content: string
   name: string,
 }
 
 type CustomTemplateSelectorProps = {
-  onSelectedTemplate: (content: string) => void;
+  setDailyReport: (content: string) => void;
 }
 
 type NotificationProps = {
-  onSelectedNotification: (id: string) => Promise<void>;
+  fetchDailyReport: (id: string, date: Date | null) => Promise<void>;
 }
