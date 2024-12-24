@@ -25,9 +25,10 @@ import {
 import db from "../lib/firebase/firebase";
 import { useAtom } from 'jotai';
 import { activeTabAtom } from "../lib/atoms/atoms";
+import { getMessaging, getToken, onMessage } from "firebase/messaging";
 
 export function Notification({
-  onSelectedNotification
+  fetchDailyReport
 }: NotificationProps) {
   const [isExistNotification, setIsExistNotification] = useState(false);
   const [fetchedNotifications, setFetchedNotifications] = useState([]);
@@ -108,10 +109,9 @@ export function Notification({
   }, []);
 
   //未読の通知を選択する
-  const handleNotificationClick = async (reportId: string) => {
+  const handleNotificationClick = async (reportId: string, date: Date | null) => {
     try {
-      setActiveTab("create");
-      onSelectedNotification(reportId);
+      //通知を既読に更新
       setIsUpdating(true);
       const q = query(
         collection(db, "notifications"),
@@ -129,6 +129,9 @@ export function Notification({
         await Promise.all(updatePromises);
         fetchAllNotifications();
       }
+      //日報の取得
+      setActiveTab("create");
+      fetchDailyReport(reportId);
     } catch (err) {
       console.error(err);
     } finally {
