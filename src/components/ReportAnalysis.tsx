@@ -1,12 +1,21 @@
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from "recharts";
 
 const data = [
-  { name: '開発', 時間: 40 },
-  { name: 'ミーティング', 時間: 15 },
-  { name: 'ドキュメンテーション', 時間: 10 },
-  { name: 'レビュー', 時間: 8 },
-  { name: 'その他', 時間: 7 },
-]
+  { name: "開発", 時間: 40 },
+  { name: "ミーティング", 時間: 15 },
+  { name: "ドキュメンテーション", 時間: 10 },
+  { name: "レビュー", 時間: 8 },
+  { name: "その他", 時間: 7 },
+];
 
 export function ReportAnalysis() {
   return (
@@ -23,6 +32,5 @@ export function ReportAnalysis() {
         </BarChart>
       </ResponsiveContainer>
     </div>
-  )
+  );
 }
-

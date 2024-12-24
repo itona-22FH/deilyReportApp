@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -6,7 +6,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
+} from "@/components/ui/dialog";
 
 interface CompletePopupProps {
   isOpen: boolean;
@@ -15,7 +15,12 @@ interface CompletePopupProps {
   target: string;
 }
 
-export function CompletePopup({ isOpen, onClose, action, target }: CompletePopupProps) {
+export function CompletePopup({
+  isOpen,
+  onClose,
+  action,
+  target,
+}: CompletePopupProps) {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent>
@@ -30,6 +35,5 @@ export function CompletePopup({ isOpen, onClose, action, target }: CompletePopup
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
+  );
 }
-

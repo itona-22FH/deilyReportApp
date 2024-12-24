@@ -132,7 +132,7 @@ export function CommentSection({ reportId, isLoaded }: CommentSectionProps) {
     try {
       await updateDoc(docRef, {
         content: updatedComment,
-        updatedAt: new Date()
+        updatedAt: new Date(),
       });
       setIsEditTarget("");
       setUpdatedComment("");
@@ -188,7 +188,9 @@ export function CommentSection({ reportId, isLoaded }: CommentSectionProps) {
                 <div className="flex items-center">
                   <Textarea
                     readOnly={isEditTarget === comment.commentId ? false : true}
-                    value={updatedComment !== null ? updatedComment : comment.content}
+                    value={
+                      updatedComment !== null ? updatedComment : comment.content
+                    }
                     className={`text-xl ${
                       isEditTarget === comment.commentId
                         ? "border-black"

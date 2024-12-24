@@ -345,7 +345,7 @@ export default function DailyReportApp() {
               variant="outline"
               className="text-vivid-blue"
               onClick={() => {
-                fetchDailyReport("", selectedDate)
+                fetchDailyReport("", selectedDate);
               }}
             >
               <Search className="h-4 w-4" />
@@ -445,7 +445,7 @@ export default function DailyReportApp() {
         )}
 
         {activeTab === "list" && (
-          <ReportList fetchDailyReport={fetchDailyReport}/>
+          <ReportList fetchDailyReport={fetchDailyReport} />
         )}
 
         {activeTab === "analysis" && <ReportAnalysis />}

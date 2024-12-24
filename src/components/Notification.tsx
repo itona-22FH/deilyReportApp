@@ -23,13 +23,11 @@ import {
   updateDoc,
 } from "firebase/firestore";
 import db from "../lib/firebase/firebase";
-import { useAtom } from 'jotai';
+import { useAtom } from "jotai";
 import { activeTabAtom } from "../lib/atoms/atoms";
 import { getMessaging, getToken, onMessage } from "firebase/messaging";
 
-export function Notification({
-  fetchDailyReport
-}: NotificationProps) {
+export function Notification({ fetchDailyReport }: NotificationProps) {
   const [isExistNotification, setIsExistNotification] = useState(false);
   const [fetchedNotifications, setFetchedNotifications] = useState([]);
   const [comments, setComments] = useState([]);
@@ -109,7 +107,10 @@ export function Notification({
   }, []);
 
   //未読の通知を選択する
-  const handleNotificationClick = async (reportId: string, date: Date | null) => {
+  const handleNotificationClick = async (
+    reportId: string,
+    date: Date | null
+  ) => {
     try {
       //通知を既読に更新
       setIsUpdating(true);

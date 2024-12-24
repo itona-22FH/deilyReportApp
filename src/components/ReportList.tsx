@@ -27,9 +27,7 @@ import {
 import { useAtom } from "jotai";
 import { activeTabAtom } from "../lib/atoms/atoms";
 
-export function ReportList({
-  fetchDailyReport
-}: ReportListProps) {
+export function ReportList({ fetchDailyReport }: ReportListProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [sortBy, setSortBy] = useState("date");

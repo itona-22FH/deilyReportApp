@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-nocheck
-import { useState } from 'react'
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
@@ -13,10 +13,18 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
-import { Document, Page, Text, View, StyleSheet, PDFDownloadLink, Font } from '@react-pdf/renderer'
-import nasuRegular from './public/Nasu-Regular.ttf'
-import nasuBold from './public/fonts/Nasu-Bold'
+} from "@/components/ui/dialog";
+import {
+  Document,
+  Page,
+  Text,
+  View,
+  StyleSheet,
+  PDFDownloadLink,
+  Font,
+} from "@react-pdf/renderer";
+import nasuRegular from "./public/Nasu-Regular.ttf";
+import nasuBold from "./public/fonts/Nasu-Bold";
 
 Font.register({
   family: "Nasu-Regular",
@@ -48,16 +56,18 @@ const MyDocument = ({ startDate, endDate }) => (
     <Page size="A4" style={styles.page}>
       <View style={styles.section}>
         <Text style={styles.title}>日報エクスポート</Text>
-        <Text style={styles.text}>期間: {startDate} から {endDate}</Text>
+        <Text style={styles.text}>
+          期間: {startDate} から {endDate}
+        </Text>
         <Text style={styles.text}>ここに日報の内容が入ります。</Text>
       </View>
     </Page>
   </Document>
-)
+);
 
 export function PdfExportModal() {
-  const [startDate, setStartDate] = useState('')
-  const [endDate, setEndDate] = useState('')
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
 
   return (
     <Dialog>
@@ -110,13 +120,12 @@ export function PdfExportModal() {
                 className="bg-green-600 text-white hover:bg-green-700"
                 disabled={loading || !startDate || !endDate}
               >
-                {loading ? 'Loading document...' : 'PDF出力'}
+                {loading ? "Loading document..." : "PDF出力"}
               </Button>
             )}
           </PDFDownloadLink>
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
+  );
 }
-
