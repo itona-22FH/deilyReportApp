@@ -21,7 +21,7 @@ import { KeywordExtractor } from "@/components/KeywordExtractor";
 import { ReportAnalysis } from "@/components/ReportAnalysis";
 import { CommentSection } from "@/components/CommentSection";
 import { RealtimeSync } from "@/components/RealtimeSync";
-import db from "../lib/firebase/firebase";
+import db, { app } from "../lib/firebase/firebase";
 import {
   where,
   query,
@@ -37,12 +37,14 @@ import { useAtom } from "jotai";
 import { activeTabAtom } from "../lib/atoms/atoms";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import { getMessaging, getToken, onMessage } from "firebase/messaging";
 
 export default function DailyReportApp() {
   const [activeTab, setActiveTab] = useAtom(activeTabAtom);
   const [fetchedDailyReport, setFetchedDailyReport] = useState<DailyReport>({
     reportId: "",
     content: "",
+    reportDate: "",
     createdAt: "",
     status: "",
     templateId: "",
@@ -58,7 +60,7 @@ export default function DailyReportApp() {
   const [isUpdating, setIsUpdating] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
 
   const handleDailyReportChange = (e: {
     target: { value: SetStateAction<string> };
@@ -66,12 +68,13 @@ export default function DailyReportApp() {
     setDailyReport(e.target.value);
   };
 
-  //すでに登録されてる日報を取得
-  const fetchDailyReport = async (id: string) => {
+  //日報を取得
+  const fetchDailyReport = async (id: string, date: Date | null) => {
     try {
       setFetchedDailyReport({
         reportId: "",
         content: "",
+        reportDate: "",
         createdAt: "",
         status: "",
         templateId: "",
@@ -80,22 +83,20 @@ export default function DailyReportApp() {
       });
       setDailyReport("");
       setLoading(true);
-      const startOfDay = new Date();
-      startOfDay.setHours(0, 0, 0, 0);
-      const endOfDay = new Date();
-      endOfDay.setHours(23, 59, 59, 999);
-
+      //すでに登録されている日報をIDで取得
       if (id) {
         const docRef = doc(db, "reports", id);
         const docSnap = await getDoc(docRef);
 
         if (!docSnap.exists()) {
           setIsExistDailyReport(false);
+          setDailyReport("");
         } else {
           const docData = docSnap.data();
           setFetchedDailyReport((prevState) => ({
             ...prevState,
             reportId: id,
+            reportDate: docData.reportDate,
             content: docData.content,
             createdAt: docData.createdAt,
             status: docData.status,
@@ -103,25 +104,63 @@ export default function DailyReportApp() {
             updatedAt: docData.updatedAt,
             userId: docData.userId,
           }));
+          setSelectedDate(docData.reportDate.toDate());
           setDailyReport(docData.content);
-          setSelectedDate(docData.createdAt.toDate());
           setIsExistDailyReport(true);
         }
-      } else {
+        //指定された日付の日報を取得
+      } else if (date) {
+        const startOfDay = new Date(date);
+        startOfDay.setHours(0, 0, 0, 0);
+        const endOfDay = new Date(date);
+        endOfDay.setHours(23, 59, 59, 999);
         const q = query(
           collection(db, "reports"),
-          where("createdAt", ">=", startOfDay),
-          where("createdAt", "<=", endOfDay)
+          where("reportDate", ">=", startOfDay),
+          where("reportDate", "<=", endOfDay)
         );
-
         const querySnapshot = await getDocs(q);
         if (querySnapshot.empty) {
           setIsExistDailyReport(false);
+          setDailyReport("");
         } else {
           querySnapshot.forEach((doc) => {
             setFetchedDailyReport((prevState) => ({
               ...prevState,
               reportId: doc.id,
+              content: doc.data().content,
+              createdAt: doc.data().createdAt,
+              status: doc.data().status,
+              templateId: doc.data().templateId,
+              updatedAt: doc.data().updatedAt,
+              userId: doc.data().userId,
+            }));
+            setDailyReport(doc.data().content);
+          });
+          setIsExistDailyReport(true);
+        }
+        //当日の日報を取得
+      } else {
+        const startOfDay = new Date();
+        startOfDay.setHours(0, 0, 0, 0);
+        const endOfDay = new Date();
+        endOfDay.setHours(23, 59, 59, 999);
+        const q = query(
+          collection(db, "reports"),
+          where("reportDate", ">=", startOfDay),
+          where("reportDate", "<=", endOfDay)
+        );
+
+        const querySnapshot = await getDocs(q);
+        if (querySnapshot.empty) {
+          setIsExistDailyReport(false);
+          setDailyReport("");
+        } else {
+          querySnapshot.forEach((doc) => {
+            setFetchedDailyReport((prevState) => ({
+              ...prevState,
+              reportId: doc.id,
+              reportDate: doc.data().reportDate,
               content: doc.data().content,
               createdAt: doc.data().createdAt,
               status: doc.data().status,
@@ -141,70 +180,28 @@ export default function DailyReportApp() {
     }
   };
 
-  //日付を指定して日報を取得
-  const handleSearchReportByDate = async () => {
-    try {
-      setFetchedDailyReport({
-        reportId: "",
-        content: "",
-        createdAt: "",
-        status: "",
-        templateId: "",
-        updatedAt: "",
-        userId: "",
-      });
-      setLoading(true);
-      const startOfDay = new Date(selectedDate);
-      startOfDay.setHours(0, 0, 0, 0);
-      const endOfDay = new Date(selectedDate);
-      endOfDay.setHours(23, 59, 59, 999);
-      const q = query(
-        collection(db, "reports"),
-        where("createdAt", ">=", startOfDay),
-        where("createdAt", "<=", endOfDay)
-      );
-      const querySnapshot = await getDocs(q);
-      if (querySnapshot.empty) {
-        setIsExistDailyReport(false);
-        setDailyReport("");
-      } else {
-        querySnapshot.forEach((doc) => {
-          setFetchedDailyReport((prevState) => ({
-            ...prevState,
-            reportId: doc.id,
-            content: doc.data().content,
-            createdAt: doc.data().createdAt,
-            status: doc.data().status,
-            templateId: doc.data().templateId,
-            updatedAt: doc.data().updatedAt,
-            userId: doc.data().userId,
-          }));
-          setDailyReport(doc.data().content);
-        });
-        setIsExistDailyReport(true);
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   //新しい日報を追加
   const dailyWorkReportRegistration = async () => {
     try {
       setIsRegistering(true);
+      const today = new Date();
+      const copyToday = new Date(today);
+      copyToday?.setHours(0, 0, 0, 0);
+      const copySelectedDate = new Date(selectedDate ? selectedDate : "");
+      copySelectedDate?.setHours(0, 0, 0, 0);
+      const dateToUse = copySelectedDate !== copyToday ? selectedDate : today;
       const docRef = await addDoc(collection(db, "reports"), {
         content: dailyReport,
-        createdAt: new Date(),
+        createdAt: today,
+        reportDate: dateToUse,
         status: "完了",
         templateId: "6dMQb1luWEFZDI87vBDt",
-        updatedAt: new Date(),
+        updatedAt: today,
         userId: "hXRfwLUiITu3rKFtc8OV",
       });
       setIsRegistration(true);
       setIsRegistering(false);
-      fetchDailyReport("");
+      fetchDailyReport("", dateToUse);
     } catch (err) {
       console.error(err);
     } finally {
@@ -243,7 +240,30 @@ export default function DailyReportApp() {
   };
 
   useEffect(() => {
-    fetchDailyReport("");
+    fetchDailyReport("", null);
+
+    // const messaging = getMessaging(app);
+
+    // // トークンを取得
+    // getToken(messaging, { vapidKey: "YOUR_VAPID_KEY" })
+    //   .then((currentToken) => {
+    //     if (currentToken) {
+    //       console.log("FCM Token:", currentToken);
+    //     } else {
+    //       console.log(
+    //         "No registration token available. Request permission to generate one."
+    //       );
+    //     }
+    //   })
+    //   .catch((err) => {
+    //     console.error("An error occurred while retrieving token. ", err);
+    //   });
+
+    // // フォアグラウンドでの通知受信
+    // onMessage(messaging, (payload) => {
+    //   console.log("Message received. ", payload);
+    //   // 通知の処理を追加
+    // });
   }, []);
 
   return (
@@ -252,45 +272,22 @@ export default function DailyReportApp() {
         <h1 className="text-3xl font-bold text-vivid-purple">日報管理</h1>
         <div className="flex items-center space-x-4">
           <PdfExportModal />
-          <Notification onSelectedNotification={fetchDailyReport} />
+          <Notification fetchDailyReport={fetchDailyReport} />
         </div>
       </header>
       <main className="container mx-auto p-6 space-y-8">
         <div className="flex items-center justify-between">
           <div className="flex items-center">
             <Button
-              className="bg-orange-400 hover:bg-orange-300 ml-3"
+              className="bg-orange-400 hover:bg-orange-300"
               onClick={() => {
                 setActiveTab("create");
                 setSelectedDate(new Date());
-                fetchDailyReport("");
+                fetchDailyReport("", null);
               }}
             >
               今日の日報
             </Button>
-            {activeTab === "create" ? (
-              <>
-                <DatePicker
-                  selected={selectedDate}
-                  onChange={(date) => {
-                    setSelectedDate(date);
-                  }}
-                  className="px-4 py-2 ml-3 text-sm border rounded-lg bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  dateFormat="yyyy/MM/dd"
-                  placeholderText="日付を選択"
-                />
-                <Button
-                  size="icon"
-                  variant="outline"
-                  className="text-vivid-blue ml-3"
-                  onClick={handleSearchReportByDate}
-                >
-                  <Search className="h-4 w-4" />
-                </Button>
-              </>
-            ) : (
-              <></>
-            )}
           </div>
           <div className="flex items-center">
             <Button
@@ -332,6 +329,32 @@ export default function DailyReportApp() {
           </div>
         </div>
 
+        {activeTab === "create" ? (
+          <div className="flex items-center space-x-2">
+            <DatePicker
+              selected={selectedDate}
+              onChange={(date) => {
+                setSelectedDate(date);
+              }}
+              className="px-4 py-2 text-sm border rounded-lg bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              dateFormat="yyyy/MM/dd"
+              placeholderText="日付を選択"
+            />
+            <Button
+              size="icon"
+              variant="outline"
+              className="text-vivid-blue"
+              onClick={() => {
+                fetchDailyReport("", selectedDate)
+              }}
+            >
+              <Search className="h-4 w-4" />
+            </Button>
+          </div>
+        ) : (
+          <></>
+        )}
+
         {activeTab === "create" && (
           <div className="space-y-6">
             <div>
@@ -345,7 +368,7 @@ export default function DailyReportApp() {
                 </pre>
               ) : (
                 <>
-                  <CustomTemplateSelector onSelectedTemplate={setDailyReport} />
+                  <CustomTemplateSelector setDailyReport={setDailyReport} />
                   <Textarea
                     placeholder={
                       loading
@@ -422,7 +445,7 @@ export default function DailyReportApp() {
         )}
 
         {activeTab === "list" && (
-          <ReportList onSelectedReport={fetchDailyReport} />
+          <ReportList fetchDailyReport={fetchDailyReport}/>
         )}
 
         {activeTab === "analysis" && <ReportAnalysis />}
