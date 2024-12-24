@@ -15,11 +15,21 @@ import {
 } from "@/components/ui/table";
 import { ChevronLeft, ChevronRight, Search } from "lucide-react";
 import db from "../lib/firebase/firebase";
-import { where, query, collection, getDocs, orderBy } from "firebase/firestore";
-import { useAtom } from 'jotai';
+import {
+  where,
+  query,
+  collection,
+  getDocs,
+  orderBy,
+  startAt,
+  endAt,
+} from "firebase/firestore";
+import { useAtom } from "jotai";
 import { activeTabAtom } from "../lib/atoms/atoms";
 
-export function ReportList({onSelectedReport}: ReportListProps) {
+export function ReportList({
+  fetchDailyReport
+}: ReportListProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [sortBy, setSortBy] = useState("date");
@@ -35,7 +45,7 @@ export function ReportList({onSelectedReport}: ReportListProps) {
       const q = query(
         collection(db, "reports"),
         where("userId", "==", "hXRfwLUiITu3rKFtc8OV"),
-        orderBy("createdAt", "desc")
+        orderBy("reportDate", "desc")
       );
       const querySnapshot = await getDocs(q);
       if (querySnapshot.empty) {
@@ -43,6 +53,7 @@ export function ReportList({onSelectedReport}: ReportListProps) {
         const reports = querySnapshot.docs.map((doc) => ({
           reportId: doc.id,
           content: doc.data().content,
+          reportDate: doc.data().reportDate,
           createdAt: doc.data().createdAt,
           status: doc.data().status,
           templateId: doc.data().templateId,
@@ -51,6 +62,31 @@ export function ReportList({onSelectedReport}: ReportListProps) {
         }));
         setFetchedDailyReport(reports);
       }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  //前方一致による日報検索
+  const handleSearchReportByTerm = async () => {
+    try {
+      setLoading(true);
+      const querySnapshot = await getDocs(collection(db, "reports"));
+      const reports = querySnapshot.docs
+        .filter((doc) => doc.data().content.toLowerCase().includes(searchTerm))
+        .map((doc) => ({
+          reportId: doc.id,
+          content: doc.data().content,
+          reportDate: doc.data().reportDate,
+          createdAt: doc.data().createdAt,
+          status: doc.data().status,
+          templateId: doc.data().templateId,
+          updatedAt: doc.data().updatedAt,
+          userId: doc.data().userId,
+        }));
+      setFetchedDailyReport(reports);
     } catch (err) {
       console.error(err);
     } finally {
@@ -82,18 +118,16 @@ export function ReportList({onSelectedReport}: ReportListProps) {
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-64 border-vivid-blue focus:border-vivid-purple focus:ring-vivid-purple"
           />
-          <Button size="icon" variant="outline" className="text-vivid-blue">
+
+          <Button
+            size="icon"
+            variant="outline"
+            className="text-vivid-blue"
+            onClick={handleSearchReportByTerm}
+          >
             <Search className="h-4 w-4" />
           </Button>
         </div>
-        <Select
-          value={sortBy}
-          onValueChange={(value) => setSortBy(value)}
-          className="border-vivid-green focus:border-vivid-purple focus:ring-vivid-purple"
-        >
-          <option value="date">日付順</option>
-          <option value="title">タイトル順</option>
-        </Select>
       </div>
 
       {loading ? (
@@ -117,13 +151,13 @@ export function ReportList({onSelectedReport}: ReportListProps) {
                   index % 2 === 0 ? "bg-white" : "bg-vivid-blue bg-opacity-10"
                 }`}
                 onClick={() => {
-                  onSelectedReport(report.reportId);
+                  fetchDailyReport(report.reportId, report.reportDate.toDate());
                   setActiveTab("create");
-                }
-                }
+                }}
               >
                 <TableCell>
-                  {report.createdAt.toDate()
+                  {report.reportDate
+                    .toDate()
                     .toLocaleDateString("ja-JP", {
                       year: "numeric",
                       month: "long",
