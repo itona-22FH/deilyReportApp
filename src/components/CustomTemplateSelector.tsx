@@ -11,7 +11,7 @@ import { getDocs, collection } from "firebase/firestore";
 import { useEffect, useState } from "react";
 
 export function CustomTemplateSelector({
-  onSelectedTemplate,
+  setDailyReport,
 }: CustomTemplateSelectorProps) {
   const [loading, setLoading] = useState(true);
   const [templates, setTemplates] = useState<Template[]>([]);
@@ -46,7 +46,7 @@ export function CustomTemplateSelector({
       (temp) => temp.name === templateName
     );
     if (selectedTemplate) {
-      onSelectedTemplate(selectedTemplate.content);
+      setDailyReport(selectedTemplate.content);
     }
   };
 
