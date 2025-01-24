@@ -176,6 +176,8 @@ export default function DailyReportApp() {
     } catch (err) {
       console.error(err);
     } finally {
+
+
       setLoading(false); // データ取得完了時にロード状態を解除
     }
   };
