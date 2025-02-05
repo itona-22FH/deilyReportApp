@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 
-export function KeywordExtractor() {
+export const KeywordExtractor = () => {
   const [keywords, setKeywords] = useState<string[]>([]);
 
   useEffect(() => {

@@ -17,7 +17,7 @@ const data = [
   { name: "その他", 時間: 7 },
 ];
 
-export function ReportAnalysis() {
+export const ReportAnalysis = () => {
   return (
     <div className="bg-white p-6 rounded-lg shadow-lg">
       <h2 className="text-2xl font-bold mb-6">今月の業務分布</h2>

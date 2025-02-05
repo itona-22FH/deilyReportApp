@@ -25,7 +25,7 @@ type Template = {
   fields: TemplateField[];
 };
 
-export function CustomTemplate() {
+export const CustomTemplate = () => {
   const [templates, setTemplates] = useState<Template[]>([
     {
       id: "1",

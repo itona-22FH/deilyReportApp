@@ -65,7 +65,7 @@ const MyDocument = ({ startDate, endDate }) => (
   </Document>
 );
 
-export function PdfExportModal() {
+export const PdfExportModal = () => {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
 

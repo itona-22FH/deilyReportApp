@@ -15,12 +15,12 @@ interface CompletePopupProps {
   target: string;
 }
 
-export function CompletePopup({
+export const  CompletePopup = ({
   isOpen,
   onClose,
   action,
   target,
-}: CompletePopupProps) {
+}: CompletePopupProps) => {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent>

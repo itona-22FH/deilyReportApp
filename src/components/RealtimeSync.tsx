@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 
-export function RealtimeSync() {
+export const RealtimeSync = () => {
   const [isSyncing, setIsSyncing] = useState(false);
 
   // useEffect(() => {

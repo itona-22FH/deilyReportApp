@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-nocheck
-import { useState, useEffect } from "react";
+import { useState, useEffect, forwardRef, useRef } from "react";
 import { Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -27,7 +27,7 @@ import { useAtom } from "jotai";
 import { activeTabAtom } from "../lib/atoms/atoms";
 import { getMessaging, getToken, onMessage } from "firebase/messaging";
 
-export function Notification({ fetchDailyReport }: NotificationProps) {
+export const Notification = forwardRef(({ fetchDailyReport }: NotificationProps, ref) => {
   const [isExistNotification, setIsExistNotification] = useState(false);
   const [fetchedNotifications, setFetchedNotifications] = useState([]);
   const [comments, setComments] = useState([]);
@@ -105,6 +105,7 @@ export function Notification({ fetchDailyReport }: NotificationProps) {
   useEffect(() => {
     fetchAllNotifications();
   }, []);
+
 
   //未読の通知を選択する
   const handleNotificationClick = async (
@@ -191,3 +192,5 @@ export function Notification({ fetchDailyReport }: NotificationProps) {
     </DropdownMenu>
   );
 }
+);
+Notification.displayName = "Notification"

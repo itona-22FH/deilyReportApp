@@ -10,9 +10,9 @@ import db from "@/lib/firebase/firebase";
 import { getDocs, collection } from "firebase/firestore";
 import { useEffect, useState } from "react";
 
-export function CustomTemplateSelector({
+export const CustomTemplateSelector = ({
   setDailyReport,
-}: CustomTemplateSelectorProps) {
+}: CustomTemplateSelectorProps) => {
   const [loading, setLoading] = useState(true);
   const [templates, setTemplates] = useState<Template[]>([]);
 

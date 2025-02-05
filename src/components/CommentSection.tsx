@@ -23,7 +23,8 @@ import {
 } from "firebase/firestore";
 import { CompletePopup } from "./CompletePopup";
 
-export function CommentSection({ reportId, isLoaded }: CommentSectionProps) {
+
+export const CommentSection = ({ reportId, isLoaded }: CommentSectionProps) => {
   const [newComment, setNewComment] = useState("");
   const [loading, setLoading] = useState(true);
   const [comments, setComments] = useState<UserComment[]>([]);
@@ -92,7 +93,7 @@ export function CommentSection({ reportId, isLoaded }: CommentSectionProps) {
         reportId: reportId,
         updatedAt: new Date(),
         userId: "hXRfwLUiITu3rKFtc8OV",
-        userName: "たけのこ大先生",
+        userName: "コメントテストユーザー",
       });
       setIsRegistration(true);
       setNewComment("");
